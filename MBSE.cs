@@ -173,12 +173,12 @@ namespace MBSE
                     foreach (GameObject go in gameObjects)
                     {
                         List<string> list = new List<string>();
-                        TextMeshProUGUI[] tmp = go.GetComponentsInChildren<TextMeshProUGUI>();
-                        UnityEngine.UI.Text[] tmp2 = go.GetComponentsInChildren<UnityEngine.UI.Text>();
+                        TextMeshProUGUI[] tmp = go.GetComponentsInChildren<TextMeshProUGUI>(true);
+                        UnityEngine.UI.Text[] tmp2 = go.GetComponentsInChildren<UnityEngine.UI.Text>(true);
                         tmp.AddRangeToArray<TextMeshProUGUI>(go.GetComponents<TextMeshProUGUI>());
-                        tmp.AddRangeToArray<TextMeshProUGUI>(go.GetComponentsInParent<TextMeshProUGUI>());
+                        tmp.AddRangeToArray<TextMeshProUGUI>(go.GetComponentsInParent<TextMeshProUGUI>(true));
                         tmp2.AddRangeToArray<UnityEngine.UI.Text>(go.GetComponents<UnityEngine.UI.Text>());
-                        tmp2.AddRangeToArray<UnityEngine.UI.Text>(go.GetComponentsInParent<UnityEngine.UI.Text>());
+                        tmp2.AddRangeToArray<UnityEngine.UI.Text>(go.GetComponentsInParent<UnityEngine.UI.Text>(true));
 
                         foreach (TextMeshProUGUI t in tmp)
                         {

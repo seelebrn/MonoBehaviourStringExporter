@@ -17,6 +17,8 @@ using UnityEngine;
 using Il2CppSystem.Linq;
 using UnhollowerRuntimeLib;
 using Newtonsoft.Json.Linq;
+using TMPro;
+
 
 namespace SRLinesPuller
 {
@@ -162,6 +164,58 @@ namespace SRLinesPuller
                                 tw.Close();
                             }
 
+                        }
+                    }
+                    List<GameObject> gameObjects = bundle.LoadAllAssets<GameObject>().ToList();
+                    foreach (GameObject go in gameObjects)
+                    {
+                        List<string> list = new List<string>();
+                        TextMeshProUGUI[] tmp = go.GetComponentsInChildren<TextMeshProUGUI>();
+                        UnityEngine.UI.Text[] tmp2 = go.GetComponentsInChildren<UnityEngine.UI.Text>();
+                        tmp.AddRangeToArray<TextMeshProUGUI>(go.GetComponents<TextMeshProUGUI>());
+                        tmp2.AddRangeToArray<UnityEngine.UI.Text>(go.GetComponents<UnityEngine.UI.Text>());
+
+
+                        foreach (TextMeshProUGUI t in tmp)
+                        {
+                            if (!list.Contains(t.text.Replace("\n", "")))
+                            {
+                                list.Add(t.text.Replace("\n", ""));
+                            }
+                        }
+                        foreach (UnityEngine.UI.Text t2 in tmp2)
+                        {
+                            {
+                                if (!list.Contains(t2.text.Replace("\n", "")))
+                                {
+                                    list.Add(t2.text.Replace("\n", ""));
+                                }
+                            }
+
+                        }
+                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", go.name + ".txt"), append: true))
+                        {
+
+                            foreach (string s in list.Distinct())
+                            {
+                                if (Helpers.IsChinese(s))
+                                {
+                                    tw.Write(s + Il2CppSystem.Environment.NewLine);
+                                }
+                            }
+                            tw.Close();
+                        }
+                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "MasterList.txt"), append: true))
+                        {
+
+                            foreach (string s in list.Distinct())
+                            {
+                                if (Helpers.IsChinese(s))
+                                {
+                                    tw.Write(s + Il2CppSystem.Environment.NewLine);
+                                }
+                            }
+                            tw.Close();
                         }
                     }
                 }

@@ -42,9 +42,9 @@ namespace MBSE
                 {
                     File.Delete(Path.Combine(BepInEx.Paths.PluginPath, "MasterList.txt"));
                 }
-                if (File.Exists(Path.Combine(BepInEx.Paths.PluginPath, "MasterList.txt")))
+                if (File.Exists(Path.Combine(BepInEx.Paths.PluginPath, "MasterListTMP.txt")))
                 {
-                    File.Delete(Path.Combine(BepInEx.Paths.PluginPath, "MasterList.txt"));
+                    File.Delete(Path.Combine(BepInEx.Paths.PluginPath, "MasterListTMP.txt"));
                 }
                 if (!Directory.Exists(Path.Combine(BepInEx.Paths.PluginPath, "Assets")))
                 {
@@ -64,101 +64,108 @@ namespace MBSE
 
                     foreach (var x in objarr)
                     {
-                        if (!Plugin.forbidden.Contains(x.GetType().Name))
+                        try
                         {
-                            List<string> list = new List<string>();
-
-                            var y = UnityEngine.JsonUtility.ToJson(x, true);
-
-                            //Debug.Log("Y = " + y);
-                            var p = JObject.Parse(y);
-                            //Debug.Log("P = " + p);
-
-
-                            if (p != null)
+                            if (!Plugin.forbidden.Contains(x.GetType().Name))
                             {
-                                Debug.Log("Non Null");
-                                foreach (var a in p.DescendantsAndSelf())
+                                List<string> list = new List<string>();
+
+                                var y = UnityEngine.JsonUtility.ToJson(x, true);
+
+                                //Debug.Log("Y = " + y);
+                                var p = JObject.Parse(y);
+                                //Debug.Log("P = " + p);
+
+
+                                if (p != null)
                                 {
-                                    if (a is JObject obj)
-                                        foreach (var prop in obj.Properties())
-                                            if (!(prop.Value is JObject) && !(prop.Value is JArray))
-                                            {
-                                                try
+                                    Debug.Log("Non Null");
+                                    foreach (var a in p.DescendantsAndSelf())
+                                    {
+                                        if (a is JObject obj)
+                                            foreach (var prop in obj.Properties())
+                                                if (!(prop.Value is JObject) && !(prop.Value is JArray))
                                                 {
-                                                    if (JObject.Parse(prop.Value.ToString()).HasValues)
+                                                    try
                                                     {
-                                                        var subjson = JObject.Parse(prop.Value.ToString());
-                                                        foreach (var b in subjson.DescendantsAndSelf())
+                                                        if (JObject.Parse(prop.Value.ToString()).HasValues)
                                                         {
-                                                            if (b is JObject obj2)
+                                                            var subjson = JObject.Parse(prop.Value.ToString());
+                                                            foreach (var b in subjson.DescendantsAndSelf())
                                                             {
-                                                                foreach (var prop2 in obj2.Properties())
+                                                                if (b is JObject obj2)
                                                                 {
-                                                                    if (!(prop2.Value is JObject) && !(prop2.Value is JArray) && prop2.Value != null)
+                                                                    foreach (var prop2 in obj2.Properties())
                                                                     {
-                                                                        if (Helpers.IsChinese(prop2.Value.ToString()))
+                                                                        if (!(prop2.Value is JObject) && !(prop2.Value is JArray) && prop2.Value != null)
                                                                         {
-                                                                            Debug.Log("SubValue = " + prop2.Value.ToString());
-                                                                            list.Add(prop2.Value.ToString().Replace("\n", ""));
+                                                                            if (Helpers.IsChinese(prop2.Value.ToString()))
+                                                                            {
+                                                                                Debug.Log("SubValue = " + prop2.Value.ToString());
+                                                                                list.Add(prop2.Value.ToString().Replace("\n", ""));
+                                                                            }
                                                                         }
                                                                     }
                                                                 }
                                                             }
                                                         }
+
+
+                                                    }
+                                                    catch
+                                                    {
+
+                                                    }
+                                                    if (Helpers.IsChinese(prop.Value.ToString()) && !prop.Value.ToString().StartsWith("{"))
+                                                    {
+                                                        Debug.Log("Value = " + prop.Value.ToString().Replace("\n", ""));
+                                                        list.Add(prop.Value.ToString().Replace("\n", ""));
+
                                                     }
 
 
-                                                }
-                                                catch
-                                                {
-
-                                                }
-                                                if (Helpers.IsChinese(prop.Value.ToString()) && !prop.Value.ToString().StartsWith("{"))
-                                                {
-                                                    Debug.Log("Value = " + prop.Value.ToString().Replace("\n", ""));
-                                                    list.Add(prop.Value.ToString().Replace("\n", ""));
 
                                                 }
 
 
 
-                                            }
-
-
-
-                                }
-                            }
-                            else
-                            {
-                                Debug.Log("Null");
-                            }
-
-
-                            using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", x.name + " - " + x.GetType().Name + x.GetHashCode() + ".txt"), append: true))
-                            {
-
-                                foreach (string s in list.Distinct())
-                                {
-                                    if (Helpers.IsChinese(s))
-                                    {
-                                        tw.Write(s + Environment.NewLine);
                                     }
                                 }
-                                tw.Close();
-                            }
-                            using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "MasterList.txt"), append: true))
-                            {
-
-                                foreach (string s in list.Distinct())
+                                else
                                 {
-                                    if (Helpers.IsChinese(s))
-                                    {
-                                        tw.Write(s + Environment.NewLine);
-                                    }
+                                    Debug.Log("Null");
                                 }
-                                tw.Close();
+
+
+                                using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", x.GetType().Name + x.GetHashCode() + ".txt"), append: true))
+                                {
+
+                                    foreach (string s in list.Distinct())
+                                    {
+                                        if (Helpers.IsChinese(s))
+                                        {
+                                            tw.Write(s + Environment.NewLine);
+                                        }
+                                    }
+                                    tw.Close();
+                                }
+                                using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "MasterList.txt"), append: true))
+                                {
+
+                                    foreach (string s in list.Distinct())
+                                    {
+                                        if (Helpers.IsChinese(s))
+                                        {
+                                            tw.Write(s + Environment.NewLine);
+                                        }
+                                    }
+                                    tw.Close();
+                                }
+
                             }
+                        }
+                        catch
+                        {
 
                         }
                     }
@@ -190,7 +197,7 @@ namespace MBSE
                             }
 
                         }
-                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", go.name + ".txt"), append: true))
+                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", "GameObject" + go.GetHashCode() + ".txt"), append: true))
                         {
 
                             foreach (string s in list.Distinct())
@@ -202,7 +209,7 @@ namespace MBSE
                             }
                             tw.Close();
                         }
-                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "MasterList.txt"), append: true))
+                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "MasterListTMP.txt"), append: true))
                         {
 
                             foreach (string s in list.Distinct())
@@ -215,7 +222,7 @@ namespace MBSE
                             tw.Close();
                         }
                     }
-                } 
+                }
             }
         }
     }

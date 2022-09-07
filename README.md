@@ -1,7 +1,7 @@
 # MonoBehaviourStringExporter
 This is a plugin made to pull lines from Unity games.
 
-Code by Cadenza. If you reuse this, please credit me. 
+Code by Cadenza. If you reuse this, please credit me. But if you don't, I won't be mad.
 
 This code uses : 
 

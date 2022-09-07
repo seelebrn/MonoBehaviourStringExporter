@@ -20,7 +20,7 @@ using Newtonsoft.Json.Linq;
 using TMPro;
 
 
-namespace SRLinesPuller
+namespace MBSEIL2CPP
 {
 
     [BepInPlugin("Cadenza.SRLinesPuller.EN.MOD", "SRLinesPuller", "0.5")]
@@ -54,6 +54,15 @@ namespace SRLinesPuller
                 {
                     File.Delete(Path.Combine(BepInEx.Paths.PluginPath, "MasterList.txt"));
                 }
+                if (File.Exists(Path.Combine(BepInEx.Paths.PluginPath, "MasterListTMP.txt")))
+                {
+                    File.Delete(Path.Combine(BepInEx.Paths.PluginPath, "MasterListTMP.txt"));
+                }
+                if (!Directory.Exists(Path.Combine(BepInEx.Paths.PluginPath, "Assets")))
+                {
+                    Directory.CreateDirectory(Path.Combine(BepInEx.Paths.PluginPath, "Assets"));
+                }
+
 
                 System.IO.DirectoryInfo di = new DirectoryInfo(Path.Combine(BepInEx.Paths.PluginPath, "Assets"));
 
@@ -139,7 +148,7 @@ namespace SRLinesPuller
                             }
 
 
-                            using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", x.name + " - " + x.GetIl2CppType().Name + x.GetHashCode() + ".txt"), append: true))
+                            using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", x.GetType().Name + x.GetHashCode() + ".txt"), append: true))
                             {
 
                                 foreach (string s in list.Distinct())
@@ -193,7 +202,7 @@ namespace SRLinesPuller
                             }
 
                         }
-                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", go.name + ".txt"), append: true))
+                         using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", "GameObject" + go.GetHashCode() + ".txt"), append: true))
                         {
 
                             foreach (string s in list.Distinct())
@@ -205,7 +214,7 @@ namespace SRLinesPuller
                             }
                             tw.Close();
                         }
-                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "MasterList.txt"), append: true))
+                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "MasterListTMP.txt"), append: true))
                         {
 
                             foreach (string s in list.Distinct())

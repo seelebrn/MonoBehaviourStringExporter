@@ -179,10 +179,12 @@ namespace MBSEIL2CPP
                     foreach (GameObject go in gameObjects)
                     {
                         List<string> list = new List<string>();
-                        TextMeshProUGUI[] tmp = go.GetComponentsInChildren<TextMeshProUGUI>();
-                        UnityEngine.UI.Text[] tmp2 = go.GetComponentsInChildren<UnityEngine.UI.Text>();
-                        tmp.AddRangeToArray<TextMeshProUGUI>(go.GetComponents<TextMeshProUGUI>());
+                        TextMeshProUGUI[] tmp = go.GetComponentsInChildren<TextMeshProUGUI>(true);
+                        UnityEngine.UI.Text[] tmp2 = go.GetComponentsInChildren<UnityEngine.UI.Text>(true);
+                        tmp.AddRangeToArray<TextMeshProUGUI>(go.GetComponents<TextMeshProUGUI>()) ;
+                        tmp.AddRangeToArray<Component>(go.GetComponentsInParent(TextMeshProUGUI.Il2CppType, true));
                         tmp2.AddRangeToArray<UnityEngine.UI.Text>(go.GetComponents<UnityEngine.UI.Text>());
+                        tmp2.AddRangeToArray<Component>(go.GetComponentsInParent(UnityEngine.UI.Text.Il2CppType, true));
 
 
                         foreach (TextMeshProUGUI t in tmp)

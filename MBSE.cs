@@ -2,6 +2,7 @@ using BepInEx;
 using Fungus;
 using HarmonyLib;
 using Newtonsoft.Json.Linq;
+using script.Steam.UI.Base;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,7 +31,7 @@ namespace MBSE
         {
             log = Logger;
             log.LogInfo("Welcome to MBSE");
-            Assembly startingassembly = Assembly.GetAssembly(typeof(MapUI));
+            Assembly startingassembly = Assembly.GetAssembly(typeof(Say));
             log.LogInfo("SA = " + startingassembly);
 
             foreach (Type t in startingassembly.GetTypes())
@@ -84,7 +85,7 @@ namespace MBSE
                 {
                     UnityEngine.Object[] objarr = bundle.LoadAllAssets<UnityEngine.Object>();
 
-                    foreach (var x in objarr)
+                    /*foreach (var x in objarr)
                     {
                         if (!Plugin.forbidden.Contains(x.GetType().Name))
                         {
@@ -190,7 +191,7 @@ namespace MBSE
                             }
 
                         }
-                    }
+                    }*/
 
 
                     foreach (var go in Resources.LoadAll<GameObject>(""))
@@ -327,8 +328,64 @@ namespace MBSE
 
                     }
 
+                    System.Collections.Generic.List<GameObject> gameObjects = bundle.LoadAllAssets<GameObject>().ToList();
+
+                    foreach (GameObject go in gameObjects)
+                    {
+
+                        System.Collections.Generic.List<string> list = new System.Collections.Generic.List<string>();
+                        TextMeshProUGUI[] tmp = go.GetComponentsInChildren<TextMeshProUGUI>(true);
+                        UnityEngine.UI.Text[] tmp2 = go.GetComponentsInChildren<UnityEngine.UI.Text>(true);
+                        tmp.AddRangeToArray<TextMeshProUGUI>(go.GetComponents<TextMeshProUGUI>());
+                        tmp.AddRangeToArray<Component>(go.GetComponentsInParent(typeof(TextMeshProUGUI), true));
+                        tmp2.AddRangeToArray<UnityEngine.UI.Text>(go.GetComponents<UnityEngine.UI.Text>());
+                        tmp2.AddRangeToArray<Component>(go.GetComponentsInParent(typeof(UnityEngine.UI.Text), true));
+
+                        foreach (TextMeshProUGUI t in tmp)
+                        {
+                            if (!list.Contains(t.text.Replace("\n", "")))
+                            {
+                                list.Add(t.text.Replace("\n", ""));
+                            }
+                        }
+                        foreach (UnityEngine.UI.Text t2 in tmp2)
+                        {
+                            {
+                                if (!list.Contains(t2.text.Replace("\n", "")))
+                                {
+                                    list.Add(t2.text.Replace("\n", ""));
+                                }
+                            }
+
+                        }
+                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", "GameObject" + go.GetHashCode() + ".txt"), append: true))
+                        {
+
+                            foreach (string s in list.Distinct())
+                            {
+                                if (Helpers.IsChinese(s))
+                                {
+                                    tw.Write(s + Environment.NewLine);
+                                }
+                            }
+                            tw.Close();
+                        }
+                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "MasterListTMP.txt"), append: true))
+                        {
+
+                            foreach (string s in list.Distinct())
+                            {
+                                if (Helpers.IsChinese(s))
+                                {
+                                    tw.Write(s + Environment.NewLine);
+                                }
+                            }
+                            tw.Close();
+                        }
+                    }
+
                 }
-              
+
             }
         }
     }

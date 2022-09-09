@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,43 +13,58 @@ using Il2CppSystem;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 using UnhollowerBaseLib;
-using UnityEngine;
 using Il2CppSystem.Linq;
 using UnhollowerRuntimeLib;
 using Newtonsoft.Json.Linq;
 using TMPro;
 
-
-namespace MBSEIL2CPP
+namespace MBSE
 {
-
-    [BepInPlugin("Cadenza.SRLinesPuller.EN.MOD", "SRLinesPuller", "0.5")]
+    [BepInPlugin("Cadenza.MBSE.MOD", "MBSE", "0.5")]
     public class Plugin : BasePlugin
     {
         public static string[] forbidden = new string[] { "Sprite", "AnimationClip", "RuntimeAnimatorController", "Texture2D", "PlaceIcon", "AudioClip", "Material", "SpriteAtlas", "Font", "Shader", "TMP_FontAsset" };
-      
 
         public static BepInEx.Logging.ManualLogSource log;
-
+        public static List<Il2CppSystem.Type> relevanttypes = new List<Il2CppSystem.Type>();
 
         public override void Load()
         {
             AddComponent<mbmb>();
             log = Log;
+            log.LogInfo("Welcome to MBSE");
+            Il2CppSystem.Reflection.Assembly startingassembly = Il2CppSystem.Reflection.Assembly.GetAssembly(Il2CppType.Of<MapUI>());
+            log.LogInfo("SA = " + startingassembly);
+
+            foreach (Il2CppSystem.Type t in startingassembly.GetTypes())
+            {
+                if (Il2CppType.Of<UnityEngine.Object>().IsAssignableFrom(t))
+                {
+                    log.LogInfo("Type = " + t.Name);
+                    relevanttypes.Add(t);
+                }
+            }
+            relevanttypes.Add(Il2CppType.Of<UnityEngine.UI.Text>());
+            relevanttypes.Add(Il2CppType.Of<TextMeshProUGUI>());
+
+
+
+
 
         }
 
-
-
     }
 
-    class mbmb : MonoBehaviour
-    {
-        public mbmb(System.IntPtr handle) : base(handle) { }
-        private void Update()
+
+        class mbmb : MonoBehaviour
         {
+            public mbmb(System.IntPtr handle) : base(handle) { }
+            private void Update()
+            {
             if (Input.GetKeyUp(KeyCode.F8) == true)
             {
+
+
                 if (File.Exists(Path.Combine(BepInEx.Paths.PluginPath, "MasterList.txt")))
                 {
                     File.Delete(Path.Combine(BepInEx.Paths.PluginPath, "MasterList.txt"));
@@ -63,7 +78,6 @@ namespace MBSEIL2CPP
                     Directory.CreateDirectory(Path.Combine(BepInEx.Paths.PluginPath, "Assets"));
                 }
 
-
                 System.IO.DirectoryInfo di = new DirectoryInfo(Path.Combine(BepInEx.Paths.PluginPath, "Assets"));
 
                 foreach (FileInfo file in di.GetFiles())
@@ -72,80 +86,86 @@ namespace MBSEIL2CPP
                 }
                 foreach (var bundle in AssetBundle.GetAllLoadedAssetBundles_Native())
                 {
-                    //Plugin.log.LogInfo("Bundle Name =" + ab.name);
                     UnityEngine.Object[] objarr = bundle.LoadAllAssets<UnityEngine.Object>();
 
                     foreach (var x in objarr)
                     {
-                        if(!Plugin.forbidden.Contains(x.GetIl2CppType().Name))
-                        { 
-                        List<string> list = new List<string>();
+                        if (!Plugin.forbidden.Contains(x.GetIl2CppType().Name))
+                        {
+                            List<string> list = new List<string>();
 
                             var y = UnityEngine.JsonUtility.ToJsonInternal(x, true);
-
-                            //Plugin.log.LogInfo("Y = " + y);
-                            var p = JObject.Parse(y);
-                            //Plugin.log.LogInfo("P = " + p);
-
-
-                            if (p != null)
+                            try
                             {
-                                Plugin.log.LogInfo("Non Null");
-                                foreach (var a in p.DescendantsAndSelf())
+                                //Plugin.log.LogInfo("Y = " + y);
+                                var p = JObject.Parse(y);
+                                //Plugin.log.LogInfo("P = " + p);
+
+
+                                if (p != null)
                                 {
-                                    if (a is JObject obj)
-                                        foreach (var prop in obj.Properties())
-                                            if (!(prop.Value is JObject) && !(prop.Value is JArray))
-                                            {
-                                                try
+                                    Plugin.log.LogInfo("Non Null");
+                                    foreach (var a in p.DescendantsAndSelf())
+                                    {
+                                        if (a is JObject obj)
+                                            foreach (var prop in obj.Properties())
+                                                if (!(prop.Value is JObject) && !(prop.Value is JArray))
                                                 {
-                                                    if (JObject.Parse(prop.Value.ToString()).HasValues)
+                                                    try
                                                     {
-                                                        var subjson = JObject.Parse(prop.Value.ToString());
-                                                        foreach (var b in subjson.DescendantsAndSelf())
+                                                        if (JObject.Parse(prop.Value.ToString()).HasValues)
                                                         {
-                                                            if (b is JObject obj2)
+                                                            var subjson = JObject.Parse(prop.Value.ToString());
+                                                            foreach (var b in subjson.DescendantsAndSelf())
                                                             {
-                                                                foreach (var prop2 in obj2.Properties())
+                                                                if (b is JObject obj2)
                                                                 {
-                                                                    if (!(prop2.Value is JObject) && !(prop2.Value is JArray) && prop2.Value != null)
+                                                                    foreach (var prop2 in obj2.Properties())
                                                                     {
-                                                                        if (Helpers.IsChinese(prop2.Value.ToString()))
+                                                                        if (!(prop2.Value is JObject) && !(prop2.Value is JArray) && prop2.Value != null)
                                                                         {
-                                                                            Plugin.log.LogInfo("SubValue = " + prop2.Value.ToString());
-                                                                            list.Add(prop2.Value.ToString().Replace("\n", ""));
+                                                                            if (Helpers.IsChinese(prop2.Value.ToString()))
+                                                                            {
+                                                                                Plugin.log.LogInfo("SubValue = " + prop2.Value.ToString());
+                                                                                list.Add(prop2.Value.ToString().Replace("\n", ""));
+                                                                            }
                                                                         }
                                                                     }
                                                                 }
                                                             }
                                                         }
+
+
+                                                    }
+                                                    catch
+                                                    {
+
+                                                    }
+                                                    if (Helpers.IsChinese(prop.Value.ToString()) && !prop.Value.ToString().StartsWith("{"))
+                                                    {
+                                                        Plugin.log.LogInfo("Value = " + prop.Value.ToString().Replace("\n", ""));
+                                                        list.Add(prop.Value.ToString().Replace("\n", ""));
+
                                                     }
 
 
-                                                }
-                                                catch
-                                                {
-
-                                                }
-                                                if (Helpers.IsChinese(prop.Value.ToString()) && !prop.Value.ToString().StartsWith("{"))
-                                                {
-                                                    Plugin.log.LogInfo("Value = " + prop.Value.ToString().Replace("\n", ""));
-                                                    list.Add(prop.Value.ToString().Replace("\n", ""));
 
                                                 }
 
 
 
-                                            }
-
-
-
+                                    }
+                                }
+                                else
+                                {
+                                    Plugin.log.LogInfo("Null");
                                 }
                             }
-                            else
+                            catch
                             {
-                                Plugin.log.LogInfo("Null");
+
                             }
+                           
 
 
                             using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", x.GetType().Name + x.GetHashCode() + ".txt"), append: true))
@@ -175,71 +195,157 @@ namespace MBSEIL2CPP
 
                         }
                     }
-                    List<GameObject> gameObjects = bundle.LoadAllAssets<GameObject>().ToList();
-                    foreach (GameObject go in gameObjects)
+
+                    var gos = Resources.LoadAll("", GameObject.Il2CppType);
+                    Plugin.log.LogInfo("GOS count = " + gos.OfType<GameObject>());
+                    foreach (var go in gos.OfType<GameObject>())
                     {
-                        List<string> list = new List<string>();
-                        TextMeshProUGUI[] tmp = go.GetComponentsInChildren<TextMeshProUGUI>(true);
-                        UnityEngine.UI.Text[] tmp2 = go.GetComponentsInChildren<UnityEngine.UI.Text>(true);
-                        tmp.AddRangeToArray<TextMeshProUGUI>(go.GetComponents<TextMeshProUGUI>()) ;
-                        tmp.AddRangeToArray<Component>(go.GetComponentsInParent(TextMeshProUGUI.Il2CppType, true));
-                        tmp2.AddRangeToArray<UnityEngine.UI.Text>(go.GetComponents<UnityEngine.UI.Text>());
-                        tmp2.AddRangeToArray<Component>(go.GetComponentsInParent(UnityEngine.UI.Text.Il2CppType, true));
+                        Plugin.log.LogInfo("Go = " + go.name);
+                        foreach (Il2CppSystem.Type t in Plugin.relevanttypes)
+                        {
+                            foreach (var fs in go.GetComponentsInChildren(t))
+                            {
+                                Plugin.log.LogInfo("Count 1= " + go.GetComponentsInChildren(t).Count());
+                                //Plugin.log.LogInfo("Found the Component in: " + foundScript.gameObject);
+                                List<string> list = new List<string>();
 
 
-                        foreach (TextMeshProUGUI t in tmp)
-                        {
-                            if (!list.Contains(t.text.Replace("\n", "")))
-                            {
-                                list.Add(t.text.Replace("\n", ""));
-                            }
-                        }
-                        foreach (UnityEngine.UI.Text t2 in tmp2)
-                        {
-                            {
-                                if (!list.Contains(t2.text.Replace("\n", "")))
+                                try
+                                { 
+
+                                var y = UnityEngine.JsonUtility.ToJson(fs, true);
+
+
+
+                                //Debug.Log("Y = " + y);
+                                var p = JObject.Parse(y);
+                                //Debug.Log("P = " + p);
+
+
+                                if (p != null)
                                 {
-                                    list.Add(t2.text.Replace("\n", ""));
+
+                                    foreach (var a in p.DescendantsAndSelf())
+                                    {
+                                        if (a is JObject obj)
+                                            foreach (var prop in obj.Properties())
+                                                if (!(prop.Value is JObject) && !(prop.Value is JArray))
+                                                {
+                                                    try
+                                                    {
+                                                        if (Helpers.IsChinese(prop.Value.ToString()))
+                                                        {
+                                                            list.Add(prop.Value.ToString().Replace("\n", ""));
+                                                        }
+                                                        if (Helpers.IsChinese(Regex.Unescape(prop.Value.ToString())))
+                                                        {
+                                                            list.Add(Regex.Unescape(prop.Value.ToString()));
+                                                        }
+                                                        if (JObject.Parse(prop.Value.ToString()).HasValues)
+                                                        {
+                                                            var subjson = JObject.Parse(prop.Value.ToString());
+                                                            foreach (var b in subjson.DescendantsAndSelf())
+                                                            {
+                                                                if (b is JObject obj2)
+                                                                {
+                                                                    foreach (var prop2 in obj2.Properties())
+                                                                    {
+                                                                        if (!(prop2.Value is JObject) && !(prop2.Value is JArray) && prop2.Value != null)
+                                                                        {
+                                                                            if (Helpers.IsChinese(prop2.Value.ToString()))
+                                                                            {
+                                                                                list.Add(prop2.Value.ToString().Replace("\n", ""));
+                                                                            }
+                                                                            if (Helpers.IsChinese(Regex.Unescape(prop2.Value.ToString())))
+                                                                            {
+                                                                                list.Add(Regex.Unescape(prop2.Value.ToString()));
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+
+
+                                                    }
+                                                    catch
+                                                    {
+
+                                                    }
+                                                    if (Helpers.IsChinese(prop.Value.ToString()) && !prop.Value.ToString().StartsWith("{"))
+                                                    {
+                                                        Debug.Log("Value = " + prop.Value.ToString().Replace("\n", ""));
+                                                        list.Add(prop.Value.ToString().Replace("\n", ""));
+
+                                                    }
+
+
+
+                                                }
+
+
+
+                                        }
+                                    
+                                    }
+                                    else
+                                    {
+                                        Debug.Log("Null");
+                                    }
+
+                                    if (list.Count > 0)
+                                    {
+
+                                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", fs.GetType().Name + ".txt"), append: true))
+                                        {
+
+                                            foreach (string s in list.Distinct())
+                                            {
+                                                if (Helpers.IsChinese(s))
+                                                {
+                                                    tw.Write(s + Il2CppSystem.Environment.NewLine);
+                                                }
+                                            }
+                                            tw.Close();
+                                        }
+                                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "MasterList.txt"), append: true))
+                                        {
+
+                                            foreach (string s in list.Distinct())
+                                            {
+                                                if (Helpers.IsChinese(s))
+                                                {
+                                                    tw.Write(s + Il2CppSystem.Environment.NewLine);
+                                                }
+                                            }
+                                            tw.Close();
+                                        }
+                                    }
                                 }
-                            }
-
-                        }
-                         using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", "GameObject" + go.GetHashCode() + ".txt"), append: true))
-                        {
-
-                            foreach (string s in list.Distinct())
-                            {
-                                if (Helpers.IsChinese(s))
+                                catch
                                 {
-                                    tw.Write(s + Il2CppSystem.Environment.NewLine);
-                                }
-                            }
-                            tw.Close();
-                        }
-                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "MasterListTMP.txt"), append: true))
-                        {
 
-                            foreach (string s in list.Distinct())
-                            {
-                                if (Helpers.IsChinese(s))
-                                {
-                                    tw.Write(s + Il2CppSystem.Environment.NewLine);
                                 }
+                               
                             }
-                            tw.Close();
+
                         }
+
+
                     }
+
                 }
+              
             }
         }
     }
+}
 
-    public static class Helpers
+public static class Helpers
+{
+    public static readonly Regex cjkCharRegex = new Regex(@"\p{IsCJKUnifiedIdeographs}");
+    public static bool IsChinese(string s)
     {
-        public static readonly Regex cjkCharRegex = new Regex(@"\p{IsCJKUnifiedIdeographs}");
-        public static bool IsChinese(string s)
-        {
-            return cjkCharRegex.IsMatch(s);
-        }
+        return cjkCharRegex.IsMatch(s);
     }
 }

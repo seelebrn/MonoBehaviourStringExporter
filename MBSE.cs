@@ -336,10 +336,11 @@ namespace MBSE
                         System.Collections.Generic.List<string> list = new System.Collections.Generic.List<string>();
                         TextMeshProUGUI[] tmp = go.GetComponentsInChildren<TextMeshProUGUI>(true);
                         UnityEngine.UI.Text[] tmp2 = go.GetComponentsInChildren<UnityEngine.UI.Text>(true);
-                        tmp.AddRangeToArray<TextMeshProUGUI>(go.GetComponents<TextMeshProUGUI>());
-                        tmp.AddRangeToArray<Component>(go.GetComponentsInParent(typeof(TextMeshProUGUI), true));
-                        tmp2.AddRangeToArray<UnityEngine.UI.Text>(go.GetComponents<UnityEngine.UI.Text>());
-                        tmp2.AddRangeToArray<Component>(go.GetComponentsInParent(typeof(UnityEngine.UI.Text), true));
+                        tmp.AddRangeToArray(go.GetComponents<TextMeshProUGUI>());
+                        tmp.AddRangeToArray(go.GetComponentsInParent(typeof(TextMeshProUGUI), true));
+                        tmp2.AddRangeToArray(go.GetComponents<UnityEngine.UI.Text>());
+                        tmp2.AddRangeToArray(go.GetComponentsInParent(typeof(UnityEngine.UI.Text), true));
+
 
                         foreach (TextMeshProUGUI t in tmp)
                         {

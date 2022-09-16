@@ -41,8 +41,9 @@ namespace MBSE
 
             foreach (Type t in startingassembly.GetTypes())
             {
-                if (typeof(UnityEngine.Object).IsAssignableFrom(t) && t.IsSerializable)
+                if (typeof(UnityEngine.Object).IsAssignableFrom(t) && !t.IsAbstract && !t.IsSealed && t.IsClass && !t.IsGenericType)
                 {
+
                     //log.LogInfo("Type = " + t.Name);
                     relevanttypes.Add(t);
                 }
@@ -89,71 +90,78 @@ namespace MBSE
                 List<string> cache0 = new List<string>();
                 foreach (var obj in Resources.FindObjectsOfTypeAll(typeof(UnityEngine.Object)))
                 {
-                    if(relevanttypes.Contains(obj.GetType()))
-                    { 
-                    if (UnityEngine.JsonUtility.ToJson(obj) != null)
+                    if (relevanttypes.Contains(obj.GetType()) && !forbidden.Contains(obj.GetType().Name))
                     {
-
-                        var deserialized = UnityEngine.JsonUtility.ToJson(obj);
-                        if (deserialized != null)
+                        if (UnityEngine.JsonUtility.ToJson(obj) != null)
                         {
-                            var parsedStr = JObject.Parse(deserialized);
-                            var query = parsedStr.Descendants().OfType<JProperty>().Where(p => p.Value.Type != JTokenType.Array && p.Value.Type != JTokenType.Object);
-                            foreach (var property in query)
 
-                                using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", obj.GetType().Name + ".txt"), append: true))
-                                {
-                                    foreach (string s in query)
-                                    {
-                                        if (Helpers.IsChinese(s) && !cache0.Contains(s))
+                            var deserialized = UnityEngine.JsonUtility.ToJson(obj);
+                            if (deserialized != null)
+                            {
+                                var parsedStr = JObject.Parse(deserialized);
+                                var query = parsedStr.Descendants().OfType<JProperty>().Where(p => p.Value.Type != JTokenType.Array && p.Value.Type != JTokenType.Object);
+                                foreach (var property in query)
+
+                                    if (Helpers.ContainsCH(query))
+                                            {
+                                        using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", obj.GetType().Name + ".txt"), append: true))
                                         {
-                                            tw.Write(s + Environment.NewLine);
+                                            foreach (string s in query)
+                                            {
+                                                if (Helpers.IsChinese(s) && !cache0.Contains(s))
+                                                {
+                                                    tw.Write(s + Environment.NewLine);
+                                                }
+                                                cache0.Add(s);
+                                            }
+
+
+                                            tw.Close();
                                         }
-                                        cache0.Add(s);
                                     }
-
-
-                                    tw.Close();
-                                }
+                            }
                         }
-                    }
                     }
 
                 }
 
-                    List<string> cache = new List<string>();
+                List<string> cache = new List<string>();
                 foreach (GameObject go in Resources.LoadAll<GameObject>(""))
+                {
+                    foreach (Type t in relevanttypes)
                     {
-                        foreach (var y in go.GetComponentsInChildren(typeof(Say), true).AddRangeToArray(go.GetComponents(typeof(Say)).AddRangeToArray(go.GetComponentsInParent(typeof(Say), true))))
+                        if (!forbidden.Contains(t.Name) && relevanttypes.Contains(t))
                         {
-                            var deserialized = UnityEngine.JsonUtility.ToJson(y);
-                            var parsedStr = JObject.Parse(deserialized);
-                            var query = parsedStr.Descendants().OfType<JProperty>().Where(p => p.Value.Type != JTokenType.Array && p.Value.Type != JTokenType.Object);
-                            foreach (var property in query)
+                            foreach (var y in go.GetComponentsInChildren(t, true))
                             {
+                                var deserialized = UnityEngine.JsonUtility.ToJson(y);
+                                var parsedStr = JObject.Parse(deserialized);
+                                var query = parsedStr.Descendants().OfType<JProperty>().Where(p => p.Value.Type != JTokenType.Array && p.Value.Type != JTokenType.Object);
+                                foreach (var property in query)
+                                {
 
-                            using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", y.GetType().Name + ".txt"), append: true))
-                            {
-
-                                    if (Helpers.IsChinese(property.Value.ToString()) && !cache.Distinct().Contains(property.Value.ToString()))
+                                    using (StreamWriter tw = new StreamWriter(Path.Combine(BepInEx.Paths.PluginPath, "Assets", y.GetType().Name + ".txt"), append: true))
                                     {
-                                        tw.Write(property.Value.ToString() + Environment.NewLine);
+
+                                        if (Helpers.IsChinese(property.Value.ToString()) && !cache.Distinct().Contains(property.Value.ToString()))
+                                        {
+                                            tw.Write(property.Value.ToString() + Environment.NewLine);
+                                        }
+
+
+                                        tw.Close();
                                     }
-                                
+                                    cache.Add(property.ToString());
+                                }
 
-                                tw.Close();
                             }
-                            cache.Add(property.ToString());
+
                         }
-                        
-
 
                     }
 
-                    }
+                }
 
-
-               
 
 
 
@@ -181,12 +189,27 @@ public static class Helpers
         return cjkCharRegex.IsMatch(s);
     }
 
-    public static void AddOrUpdate(this Dictionary<string, List<string>> targetDictionary, string key, string entry)
+    public static bool ContainsCH(IEnumerable<JProperty> list)
     {
-        if (!targetDictionary.ContainsKey(key))
-            targetDictionary.Add(key, new List<string>());
+        int flag = 0;
 
-        targetDictionary[key].Add(entry);
+        foreach (var s in list)
+        {
+            if (Helpers.IsChinese(s.Value.ToString()))
+            {
+                flag = flag + 1;
+            }
+
+
+        }
+        if (flag > 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
 }
